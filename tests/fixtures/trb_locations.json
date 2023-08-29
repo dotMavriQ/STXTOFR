@@ -1,0 +1,15 @@
+{
+  "records": [
+    {
+      "id": "trb-1",
+      "name": "TRB Helsingborg",
+      "city": "Helsingborg",
+      "latitude": 56.05,
+      "longitude": 12.7,
+      "description": "<p>Truck stop with card access</p>",
+      "phone": "+4642123999",
+      "source_url": "https://trb.se/wp-admin/admin-ajax.php"
+    }
+  ]
+}
+

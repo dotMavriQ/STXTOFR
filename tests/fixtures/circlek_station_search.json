@@ -1,0 +1,31 @@
+{
+  "records": [
+    {
+      "site_id": "1001",
+      "name": "Circle K Arlandastad",
+      "street": "Cederstroms Slinga 21B",
+      "city": "Arlandastad",
+      "postal_code": "195 61",
+      "region": "Stockholms Lan",
+      "country_code": "SE",
+      "latitude": 59.60697,
+      "longitude": 17.896358,
+      "phones": [
+        "+46859511410",
+        "+46859511411"
+      ],
+      "fuels": [
+        "diesel",
+        "hvo100",
+        "bensin 95"
+      ],
+      "services": [
+        "toalett",
+        "truckdiesel"
+      ],
+      "opening_hours": "Mon-Fri 06:00-22:00",
+      "source_url": "https://www.circlek.se/station-search"
+    }
+  ]
+}
+
