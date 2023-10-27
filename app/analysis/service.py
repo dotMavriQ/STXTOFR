@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from app.analysis.models import GapFinding
+from app.core.time import parse_utc_datetime, utc_now
 from app.routing.publisher import Publisher
-from app.storage.repository import InMemoryRepository
+from app.storage.repository import Repository
 
 
 class AnalysisService:
-    def __init__(self, repository: InMemoryRepository, publisher: Publisher):
+    def __init__(self, repository: Repository, publisher: Publisher):
         self.repository = repository
         self.publisher = publisher
 
@@ -20,7 +21,7 @@ class AnalysisService:
         findings: list[GapFinding] = []
         counts: dict[tuple[str, str], int] = Counter()
         by_region: dict[str, list[dict[str, object]]] = defaultdict(list)
-        stale_cutoff = datetime.utcnow() - timedelta(days=21)
+        stale_cutoff = utc_now() - timedelta(days=21)
 
         for facility in facilities:
             facility_region = str(facility.get("region") or facility.get("city") or "unknown")
@@ -28,7 +29,7 @@ class AnalysisService:
                 continue
             by_region[facility_region].append(facility)
             counts[(facility_region, str(facility.get("category")))] += 1
-            freshness = datetime.fromisoformat(str(facility["freshness_ts"]))
+            freshness = parse_utc_datetime(str(facility["freshness_ts"]))
             if freshness < stale_cutoff:
                 findings.append(
                     GapFinding(
@@ -91,4 +92,3 @@ class AnalysisService:
         for record in records:
             self.publisher.publish_gap(record)
         return records
-

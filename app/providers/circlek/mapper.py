@@ -3,10 +3,15 @@ from __future__ import annotations
 from datetime import datetime
 
 from app.normalization.models import NormalizedFacility, RawPayloadRef
+from app.normalization.geo import CoordinateNormalizationResult
 from app.providers.common import stable_hash
 
 
-def map_circlek_station(record: dict[str, object], fetched_at: datetime) -> NormalizedFacility:
+def map_circlek_station(
+    record: dict[str, object],
+    fetched_at: datetime,
+    coordinates: CoordinateNormalizationResult,
+) -> NormalizedFacility:
     formatted_address = ", ".join(
         part
         for part in [
@@ -20,10 +25,13 @@ def map_circlek_station(record: dict[str, object], fetched_at: datetime) -> Norm
         [
             "circlek",
             record.get("site_id"),
-            record.get("latitude"),
-            record.get("longitude"),
+            coordinates.latitude,
+            coordinates.longitude,
         ]
     )
+    record_notes = str(record.get("notes") or "").strip()
+    coordinate_notes = "; ".join(coordinates.notes)
+    notes = "; ".join(value for value in [record_notes, coordinate_notes] if value) or None
     return NormalizedFacility(
         provider_name="circlek",
         provider_record_id=str(record["site_id"]),
@@ -34,8 +42,8 @@ def map_circlek_station(record: dict[str, object], fetched_at: datetime) -> Norm
         facility_brand="Circle K",
         category="fuel_station",
         subcategories=["truck_stop"],
-        latitude=float(record["latitude"]) if record.get("latitude") is not None else None,
-        longitude=float(record["longitude"]) if record.get("longitude") is not None else None,
+        latitude=coordinates.latitude,
+        longitude=coordinates.longitude,
         formatted_address=formatted_address or None,
         street=str(record.get("street") or "") or None,
         city=str(record.get("city") or "") or None,
@@ -49,9 +57,10 @@ def map_circlek_station(record: dict[str, object], fetched_at: datetime) -> Norm
         fuel_types=list(record.get("fuels", [])),
         parking_features=[],
         heavy_vehicle_relevance=True,
-        electric_charging_relevance="snabbladdning" in record.get("fuels", []),
-        confidence_score=0.95,
+        electric_charging_relevance="fast_charging" in record.get("fuels", []) or "fast_charging" in record.get("services", []),
+        confidence_score=max(0.0, 0.95 + coordinates.confidence_adjustment),
         freshness_ts=fetched_at,
         normalized_hash=normalized_hash,
         verified_status="unverified",
+        notes=notes,
     )

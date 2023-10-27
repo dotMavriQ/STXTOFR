@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   db:
-    image: postgres:14
+    image: docker.io/postgres:14
     environment:
       POSTGRES_DB: stxtofr
       POSTGRES_USER: postgres
@@ -13,7 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   kafka:
-    image: bitnami/kafka:3.4
+    image: docker.io/bitnami/kafka:3.4
     environment:
       KAFKA_CFG_NODE_ID: 0
       KAFKA_CFG_PROCESS_ROLES: controller,broker
@@ -27,6 +27,15 @@ services:
     ports:
       - "9092:9092"
 
+  baserow:
+    image: docker.io/baserow/baserow:latest
+    environment:
+      BASEROW_PUBLIC_URL: http://localhost:8080
+    ports:
+      - "8080:80"
+    volumes:
+      - baserow_data:/baserow/data
+
 volumes:
   postgres_data:
-
+  baserow_data:

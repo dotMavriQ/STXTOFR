@@ -5,6 +5,7 @@ from datetime import datetime
 import hashlib
 from typing import Iterable
 
+from app.core.time import parse_utc_datetime
 from app.normalization.models import NormalizedFacility, RawPayloadRef
 
 
@@ -43,6 +44,6 @@ def coerce_datetime(value: str | None, default: datetime) -> datetime:
     if not value:
         return default
     try:
-        return datetime.fromisoformat(value)
+        return parse_utc_datetime(value)
     except ValueError:
         return default

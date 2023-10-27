@@ -1,4 +1,3 @@
 # Migrations
 
-Alembic revisions belong here. The current implementation keeps the SQLAlchemy schema in `app/storage/schema.py` and can be migrated into revision files as the repository history is replayed.
-
+Alembic revisions belong here. The application startup path upgrades the database to `head`, so changes to persistent tables should land as revision files here instead of relying on plain `create_all`.

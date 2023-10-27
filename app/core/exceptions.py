@@ -13,3 +13,7 @@ class NormalizationError(STXTOFRError):
 class RecordNotFound(STXTOFRError):
     pass
 
+
+class ActiveRunError(STXTOFRError):
+    pass
+

@@ -6,7 +6,7 @@ from typing import Protocol
 
 from app.core.config import get_settings
 from app.providers.base import FetchResult
-from app.storage.repository import InMemoryRepository
+from app.storage.repository import Repository
 
 
 class RawArchive(Protocol):
@@ -15,7 +15,7 @@ class RawArchive(Protocol):
 
 
 class RepositoryArchive:
-    def __init__(self, repository: InMemoryRepository):
+    def __init__(self, repository: Repository):
         self.repository = repository
 
     def store(self, fetch_result: FetchResult, fetch_id: int | None = None) -> dict[str, object]:
@@ -23,7 +23,7 @@ class RepositoryArchive:
 
 
 class FileArchive:
-    def __init__(self, repository: InMemoryRepository, output_dir: str):
+    def __init__(self, repository: Repository, output_dir: str):
         self.repository = repository
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -36,9 +36,8 @@ class FileArchive:
         return record
 
 
-def build_archive_backend(repository: InMemoryRepository) -> RawArchive:
+def build_archive_backend(repository: Repository) -> RawArchive:
     settings = get_settings()
     if settings.archive_backend == "file":
         return FileArchive(repository=repository, output_dir=settings.file_archive_path)
     return RepositoryArchive(repository=repository)
-

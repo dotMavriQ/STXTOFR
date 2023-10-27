@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from app.core.time import utc_now
+
 
 @dataclass(frozen=True)
 class RawPayloadRef:
@@ -54,8 +56,7 @@ class NormalizedFacility:
     heavy_vehicle_relevance: bool = False
     electric_charging_relevance: bool = False
     confidence_score: float = 0.5
-    freshness_ts: datetime = field(default_factory=datetime.utcnow)
+    freshness_ts: datetime = field(default_factory=utc_now)
     normalized_hash: str = ""
     verified_status: str = "unverified"
     notes: str | None = None
-
