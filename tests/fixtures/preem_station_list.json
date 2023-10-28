@@ -1,0 +1,12 @@
+{
+  "result": {
+    "data": {
+      "allDatoCmsStationPage": {
+        "nodes": [
+          {"page": {"slug": "/stationer/preem-nykoping"}},
+          {"page": {"slug": "/not-a-station/example"}}
+        ]
+      }
+    }
+  }
+}

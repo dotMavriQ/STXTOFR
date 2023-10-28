@@ -1,0 +1,42 @@
+{
+  "RESPONSE": {
+    "RESULT": [
+      {
+        "Parking": [
+          {
+            "CountyNo": [9],
+            "Deleted": false,
+            "Description": "Rastplatsen är belyst.",
+            "Equipment": [
+              {"Type": "refuseBin"},
+              {"Type": "toilet", "Accessibility": "handicappedAccessible"},
+              {"Type": "picnicFacilities"}
+            ],
+            "Geometry": {
+              "SWEREF99TM": "POINT (695552.06 6391444.68)",
+              "WGS84": "POINT (18.274728 57.622858)"
+            },
+            "IconId": "restArea",
+            "Id": "SE_STA_TRISSID_1_4048561",
+            "Name": "Träffpunkt Gotland",
+            "OpenStatus": "open",
+            "OperationStatus": "inOperation",
+            "UsageSenario": ["restArea", "truckParking"],
+            "VehicleCharacteristics": [
+              {"VehicleType": "car", "NumberOfSpaces": 16},
+              {"VehicleType": "lorry", "NumberOfSpaces": 2}
+            ],
+            "ModifiedTime": "2023-08-14T09:43:17.480Z",
+            "DistanceToNearestCity": "3 km till Visby",
+            "LocationDescription": "Nära väg 140",
+            "Operator": {
+              "Name": "Trafikverket",
+              "ContactTelephoneNumber": "0771-921 921",
+              "ContactEmail": "trafikverket@trafikverket.se"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

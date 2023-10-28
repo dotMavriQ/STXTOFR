@@ -1,0 +1,29 @@
+{
+  "coffeeShops": [
+    {
+      "coffeeShopId": "eh-1",
+      "country": "Sweden",
+      "coffeeShopName": "Espresso House Centralen",
+      "address1": "Centralplan 15",
+      "address2": "",
+      "city": "Stockholm",
+      "postalCode": "111 20",
+      "phoneNumber": "08-12 34 56",
+      "latitude": 59.3293,
+      "longitude": 18.0686,
+      "preorderOnline": true,
+      "expressCheckout": true,
+      "takeAwayOnly": false,
+      "wifi": true,
+      "childFriendly": true,
+      "handicapFriendly": true,
+      "limitedInventory": true,
+      "openingHours": [
+        {"weekDay": "Mon", "openFrom": "06:00", "openTo": "21:00"}
+      ],
+      "irregularOpeningHours": [
+        {"date": "2023-12-24", "openFrom": "08:00", "openTo": "14:00", "description": "Christmas Eve"}
+      ]
+    }
+  ]
+}

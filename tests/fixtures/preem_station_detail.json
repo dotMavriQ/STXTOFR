@@ -1,0 +1,31 @@
+{
+  "result": {
+    "data": {
+      "datoCmsStationPage": {
+        "stationCode": "preem-1",
+        "stationName": "Preem Nykoping",
+        "streetAddress": "Brunnsgatan 1",
+        "city": "Nykoping",
+        "postalCode": "611 32",
+        "latitude": 58.753,
+        "longitude": 17.007,
+        "phoneNumber": "0155-12 34 56",
+        "adaptedFor24mVehicles": true,
+        "saifaConnected": false,
+        "carWashAutomatic": false,
+        "carWashSelfService": false,
+        "foodAndBeverages": false,
+        "trailerRental": false,
+        "fuelTypes": [{"name": "diesel"}, {"name": "HVO100"}],
+        "openingHours": {
+          "openingHourWeekday": "06:00",
+          "closeHourWeekday": "22:00",
+          "openingHourSaturday": "07:00",
+          "closeHourSaturday": "21:00",
+          "openingHourSunday": "08:00",
+          "closeHourSunday": "20:00"
+        }
+      }
+    }
+  }
+}

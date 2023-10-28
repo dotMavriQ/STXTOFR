@@ -1,0 +1,30 @@
+{
+  "Stations": {
+    "Station": [
+      {
+        "StationId": "ids-1",
+        "Country": "Sweden",
+        "State": "Open",
+        "MaintenanceFrom": null,
+        "MaintenanceUntil": null,
+        "PossibilityToLift": true,
+        "IsActive": true,
+        "Name": "IDS Malmo",
+        "NodeURL": "/station/ids-1",
+        "Address_line_1": "Hamngatan 1",
+        "Address_line_2": "211 20 Malmo",
+        "Phone": "040-00 00 00",
+        "XCoordinate": 55.6049,
+        "YCoordinate": 13.0038,
+        "Services": {"Service": ["diesel", "AdBlue", "shop"]}
+      },
+      {
+        "StationId": "ids-2",
+        "Country": "Denmark",
+        "State": "Open",
+        "PossibilityToLift": false,
+        "Name": "Skip"
+      }
+    ]
+  }
+}
