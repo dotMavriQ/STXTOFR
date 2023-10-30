@@ -2,43 +2,42 @@
 
 ## Circle K
 
-- classification: API-possible but not confirmed
-- primary approach: structured station-search response exposed behind the public site
-- fallback: archive parser failure and keep list-only records when detail fragments are missing
+- classification: scrape-backed
+- primary approach: station search page returns a structured JSON payload in the HTML response body; the adapter extracts this directly without a formal API contract
+- fallback: archive the parse failure and retain partial records when the payload shape shifts
 
 ## Rasta
 
-- classification: scrape-only
-- primary approach: listing page plus facility detail pages
-- fallback: partial record with low confidence when coordinates or address fields are missing
+- classification: scrape
+- primary approach: listing page for the station index, detail pages for address, phone, hours, and service data
+- fallback: partial record with a low confidence score when coordinates or address fields cannot be extracted from the detail page
 
 ## IDS
 
-- classification: hybrid
-- primary approach: `stations.json` feed with detail page enrichment for opening hours
-- fallback: feed-only normalization if detail fetch fails
+- classification: feed + scrape
+- primary approach: `stations.json` feed for station identity and coordinates, with detail page enrichment to recover opening hours
+- fallback: feed-only normalisation if the detail fetch fails; opening hours left null
 
 ## Preem
 
-- classification: API-native
-- primary approach: station API endpoint with nested fuels and services
-- fallback: unfiltered station pull with mapper defaults
+- classification: REST API
+- primary approach: station API endpoint returns nested station records with fuels, services, and address fields
+- fallback: unfiltered station pull with mapper defaults when optional nested fields are absent
 
 ## Espresso House
 
-- classification: API-native
-- primary approach: coffee shop JSON endpoint
-- fallback: mapper-side Sweden filtering if upstream country filtering shifts
+- classification: REST API
+- primary approach: coffee shop JSON endpoint with opening hours and amenity flags per location
+- fallback: mapper-side Sweden filter as a safeguard if the upstream country field changes
 
 ## Trafikverket Parking
 
-- classification: API-native
-- primary approach: Trafikverket query API with raw response archival
-- fallback: fail fast and retain raw response metadata for replay
+- classification: REST API
+- primary approach: Trafikverket query API with raw XML request and JSON response archival
+- fallback: fail fast on HTTP error; raw response metadata is preserved for replay once the upstream issue resolves
 
 ## TRB
 
-- classification: hybrid
-- primary approach: WordPress AJAX JSON response with HTML cleanup during normalization
-- fallback: partial JSON normalization with extraction warnings
-
+- classification: feed + scrape
+- primary approach: TRB station page is fetched to extract the store locator widget UID; the UID is then used to fetch the structured JSONP station bootstrap feed from `cdn.storelocatorwidgets.com`; HTML description fields are cleaned with BeautifulSoup during normalisation
+- fallback: partial JSON normalisation with extraction warnings when store fields are incomplete; see [docs/trb-capture.md](trb-capture.md) for the manual browser capture path
