@@ -23,4 +23,5 @@ class ProviderStatusResponse(BaseModel):
     last_run_status: Optional[str] = None
     last_run_finished_at: Optional[datetime] = None
     stale: bool = False
-
+    last_issue_count: int = 0
+    issue_backlog: int = 0
