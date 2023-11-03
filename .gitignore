@@ -13,3 +13,7 @@ dist/
 coverage.xml
 htmlcov/
 logs/
+*.code-workspace
+stxtofr.egg-info/
+.baserow-local-user.json
+legacy/
