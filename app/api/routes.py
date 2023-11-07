@@ -574,8 +574,7 @@ def list_runs(
     offset: Annotated[int, Query(ge=0)] = 0,
     repository: Repository = Depends(get_repository),
 ) -> list[dict[str, object]]:
-    rows = repository.list_runs(provider=provider, mode=mode, status=status)
-    return rows[offset:offset + limit]
+    return repository.list_runs(provider=provider, mode=mode, status=status, limit=limit, offset=offset)
 
 
 @api_router.get("/runs/{run_id}")
@@ -611,15 +610,16 @@ def list_facilities(
 ) -> list[dict[str, object]]:
     if view not in {"source", "effective"}:
         raise HTTPException(status_code=400, detail="view must be 'source' or 'effective'")
-    rows = facility_view_service.list_facilities(
+    return facility_view_service.list_facilities(
         view=view,
         provider=provider,
         category=category,
         city=city,
         need=need,
         verified=verified,
+        limit=limit,
+        offset=offset,
     )
-    return rows[offset:offset + limit]
 
 
 @api_router.get("/facilities/{facility_id}")
@@ -656,8 +656,7 @@ def list_gaps(
     offset: Annotated[int, Query(ge=0)] = 0,
     repository: Repository = Depends(get_repository),
 ) -> list[dict[str, object]]:
-    rows = repository.list_gaps(region=region, category=category, stale_only=stale_only)
-    return rows[offset:offset + limit]
+    return repository.list_gaps(region=region, category=category, stale_only=stale_only, limit=limit, offset=offset)
 
 
 @api_router.get("/issues")
@@ -669,12 +668,7 @@ def list_issues(
     offset: Annotated[int, Query(ge=0)] = 0,
     repository: Repository = Depends(get_repository),
 ) -> list[dict[str, object]]:
-    rows = repository.list_normalization_issues(
-        provider=provider,
-        severity=severity,
-        run_id=run_id,
-    )
-    return rows[offset:offset + limit]
+    return repository.list_normalization_issues(provider=provider, severity=severity, run_id=run_id, limit=limit, offset=offset)
 
 
 @api_router.post("/analysis/gaps")

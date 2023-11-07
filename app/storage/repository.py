@@ -7,6 +7,7 @@ import itertools
 import json
 from typing import Any, Protocol
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.analysis.models import GapFinding
@@ -43,7 +44,7 @@ class Repository(Protocol):
     def create_run(self, provider_name: str, mode: str, dry_run: bool) -> dict[str, Any]: ...
     def finish_run(self, run_id: int, records_fetched: int, records_normalized: int, status: str) -> dict[str, Any]: ...
     def get_run(self, run_id: int) -> dict[str, Any] | None: ...
-    def list_runs(self, provider: str | None = None, mode: str | None = None, status: str | None = None) -> list[dict[str, Any]]: ...
+    def list_runs(self, provider: str | None = None, mode: str | None = None, status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]: ...
     def save_fetch(self, run_id: int, fetch_result: FetchResult) -> dict[str, Any]: ...
     def save_raw_payload(self, fetch_result: FetchResult, fetch_id: int | None = None) -> dict[str, Any]: ...
     def get_raw_payload(self, payload_id: int) -> dict[str, Any]: ...
@@ -68,9 +69,11 @@ class Repository(Protocol):
         provider: str | None = None,
         severity: str | None = None,
         run_id: int | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[dict[str, Any]]: ...
     def save_gap(self, finding: GapFinding) -> dict[str, Any]: ...
-    def list_gaps(self, region: str | None = None, category: str | None = None, stale_only: bool = False) -> list[dict[str, Any]]: ...
+    def list_gaps(self, region: str | None = None, category: str | None = None, stale_only: bool = False, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]: ...
     def save_checkpoint(self, provider_name: str, checkpoint: str) -> None: ...
     def get_checkpoint(self, provider_name: str) -> str | None: ...
     def get_provider_status(self, provider_name: str) -> dict[str, Any]: ...
@@ -79,7 +82,19 @@ class Repository(Protocol):
     def list_facility_curations(self) -> list[dict[str, Any]]: ...
     def get_facility_curation(self, facility_id: int) -> dict[str, Any] | None: ...
     def upsert_facility_curation(self, facility_id: int, values: dict[str, Any]) -> dict[str, Any]: ...
-    def list_manual_facilities(self) -> list[dict[str, Any]]: ...
+    def list_facilities_with_curations(
+        self,
+        provider: str | None = None,
+        category: str | None = None,
+        city: str | None = None,
+        verified: bool | None = None,
+    ) -> list[tuple[dict[str, Any], dict[str, Any] | None]]: ...
+    def list_manual_facilities(
+        self,
+        category: str | None = None,
+        city: str | None = None,
+        verified: bool | None = None,
+    ) -> list[dict[str, Any]]: ...
     def upsert_manual_facility(self, values: dict[str, Any]) -> dict[str, Any]: ...
     def create_curation_sync(self, direction: str, metadata_json: dict[str, Any] | None = None) -> dict[str, Any]: ...
     def finish_curation_sync(
@@ -160,7 +175,7 @@ class InMemoryRepository:
     def get_run(self, run_id: int) -> dict[str, Any] | None:
         return next((run for run in self.runs if run["id"] == run_id), None)
 
-    def list_runs(self, provider: str | None = None, mode: str | None = None, status: str | None = None) -> list[dict[str, Any]]:
+    def list_runs(self, provider: str | None = None, mode: str | None = None, status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
         runs = self.runs
         if provider:
             runs = [run for run in runs if run["provider_name"] == provider]
@@ -168,7 +183,8 @@ class InMemoryRepository:
             runs = [run for run in runs if run["mode"] == mode]
         if status:
             runs = [run for run in runs if run["status"] == status]
-        return [self.serialize_timestamps(run) for run in sorted(runs, key=lambda row: row["started_at"], reverse=True)]
+        ordered = sorted(runs, key=lambda row: row["started_at"], reverse=True)
+        return [self.serialize_timestamps(run) for run in ordered[offset:offset + limit]]
 
     def save_fetch(self, run_id: int, fetch_result: FetchResult) -> dict[str, Any]:
         record = {
@@ -281,6 +297,8 @@ class InMemoryRepository:
         provider: str | None = None,
         severity: str | None = None,
         run_id: int | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         rows = list(self.normalization_issues)
         if provider:
@@ -289,7 +307,7 @@ class InMemoryRepository:
             rows = [row for row in rows if row["severity"] == severity]
         if run_id is not None:
             rows = [row for row in rows if row["run_id"] == run_id]
-        return rows
+        return rows[offset:offset + limit]
 
     def save_gap(self, finding: GapFinding) -> dict[str, Any]:
         record = asdict(finding)
@@ -298,7 +316,7 @@ class InMemoryRepository:
         self.gaps.append(record)
         return record
 
-    def list_gaps(self, region: str | None = None, category: str | None = None, stale_only: bool = False) -> list[dict[str, Any]]:
+    def list_gaps(self, region: str | None = None, category: str | None = None, stale_only: bool = False, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
         rows = list(self.gaps)
         if region:
             rows = [row for row in rows if row["region"] == region]
@@ -306,7 +324,7 @@ class InMemoryRepository:
             rows = [row for row in rows if row["category"] == category]
         if stale_only:
             rows = [row for row in rows if row["finding_type"] == "stale_record"]
-        return rows
+        return rows[offset:offset + limit]
 
     def save_checkpoint(self, provider_name: str, checkpoint: str) -> None:
         self.checkpoints[provider_name] = checkpoint
@@ -358,6 +376,17 @@ class InMemoryRepository:
         self.merge_candidates = candidates
         return candidates
 
+    def list_facilities_with_curations(
+        self,
+        provider: str | None = None,
+        category: str | None = None,
+        city: str | None = None,
+        verified: bool | None = None,
+    ) -> list[tuple[dict[str, Any], dict[str, Any] | None]]:
+        facilities = self.list_facilities(provider=provider, category=category, city=city, verified=verified)
+        curation_map = {row["facility_id"]: self.serialize_timestamps(row) for row in self.facility_curations}
+        return [(facility, curation_map.get(facility["id"])) for facility in facilities]
+
     def list_facility_curations(self) -> list[dict[str, Any]]:
         return [self.serialize_timestamps(row) for row in sorted(self.facility_curations, key=lambda row: row["facility_id"])]
 
@@ -381,8 +410,21 @@ class InMemoryRepository:
         existing["updated_at"] = now
         return self.serialize_timestamps(existing)
 
-    def list_manual_facilities(self) -> list[dict[str, Any]]:
-        return [self.serialize_timestamps(row) for row in sorted(self.manual_facilities, key=lambda row: row["id"])]
+    def list_manual_facilities(
+        self,
+        category: str | None = None,
+        city: str | None = None,
+        verified: bool | None = None,
+    ) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = sorted(self.manual_facilities, key=lambda row: row["id"])
+        if category:
+            rows = [row for row in rows if row.get("category") == category]
+        if city:
+            rows = [row for row in rows if row.get("city") == city]
+        if verified is not None:
+            target = "verified" if verified else "unverified"
+            rows = [row for row in rows if row.get("verified_status") == target]
+        return [self.serialize_timestamps(row) for row in rows]
 
     def upsert_manual_facility(self, values: dict[str, Any]) -> dict[str, Any]:
         existing = None
@@ -595,7 +637,7 @@ class SQLRepository:
             row = session.get(IngestionRun, run_id)
             return self._run_to_dict(row) if row is not None else None
 
-    def list_runs(self, provider: str | None = None, mode: str | None = None, status: str | None = None) -> list[dict[str, Any]]:
+    def list_runs(self, provider: str | None = None, mode: str | None = None, status: str | None = None, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
         with self._session() as session:
             query = session.query(IngestionRun)
             if provider:
@@ -604,7 +646,7 @@ class SQLRepository:
                 query = query.filter(IngestionRun.mode == mode)
             if status:
                 query = query.filter(IngestionRun.status == status)
-            rows = query.order_by(IngestionRun.started_at.desc()).all()
+            rows = query.order_by(IngestionRun.started_at.desc()).limit(limit).offset(offset).all()
             return [self.serialize_timestamps(self._run_to_dict(row)) for row in rows]
 
     def save_fetch(self, run_id: int, fetch_result: FetchResult) -> dict[str, Any]:
@@ -651,49 +693,57 @@ class SQLRepository:
             return self._raw_payload_to_dict(row)
 
     def save_facility(self, facility: NormalizedFacility) -> dict[str, Any]:
+        _fields = dict(
+            source_type=facility.source_type,
+            source_url=facility.source_url,
+            raw_payload_id=facility.raw_payload_ref.raw_payload_id,
+            facility_name=facility.facility_name,
+            facility_brand=facility.facility_brand,
+            category=facility.category,
+            subcategories=facility.subcategories,
+            latitude=facility.latitude,
+            longitude=facility.longitude,
+            formatted_address=facility.formatted_address,
+            street=facility.street,
+            city=facility.city,
+            region=facility.region,
+            postal_code=facility.postal_code,
+            country_code=facility.country_code,
+            phone=facility.phone,
+            opening_hours=facility.opening_hours,
+            amenities=facility.amenities,
+            services=facility.services,
+            fuel_types=facility.fuel_types,
+            parking_features=facility.parking_features,
+            heavy_vehicle_relevance=facility.heavy_vehicle_relevance,
+            electric_charging_relevance=facility.electric_charging_relevance,
+            confidence_score=facility.confidence_score,
+            freshness_ts=facility.freshness_ts,
+            normalized_hash=facility.normalized_hash,
+            verified_status=facility.verified_status,
+            notes=facility.notes,
+        )
         with self._session() as session:
-            row = (
-                session.query(NormalizedFacilityRow)
-                .filter(
-                    NormalizedFacilityRow.provider_name == facility.provider_name,
-                    NormalizedFacilityRow.provider_record_id == facility.provider_record_id,
-                )
-                .one_or_none()
+            row = NormalizedFacilityRow(
+                provider_name=facility.provider_name,
+                provider_record_id=facility.provider_record_id,
+                **_fields,
             )
-            if row is None:
-                row = NormalizedFacilityRow(
-                    provider_name=facility.provider_name,
-                    provider_record_id=facility.provider_record_id,
-                )
+            try:
                 session.add(row)
-            row.source_type = facility.source_type
-            row.source_url = facility.source_url
-            row.raw_payload_id = facility.raw_payload_ref.raw_payload_id
-            row.facility_name = facility.facility_name
-            row.facility_brand = facility.facility_brand
-            row.category = facility.category
-            row.subcategories = facility.subcategories
-            row.latitude = facility.latitude
-            row.longitude = facility.longitude
-            row.formatted_address = facility.formatted_address
-            row.street = facility.street
-            row.city = facility.city
-            row.region = facility.region
-            row.postal_code = facility.postal_code
-            row.country_code = facility.country_code
-            row.phone = facility.phone
-            row.opening_hours = facility.opening_hours
-            row.amenities = facility.amenities
-            row.services = facility.services
-            row.fuel_types = facility.fuel_types
-            row.parking_features = facility.parking_features
-            row.heavy_vehicle_relevance = facility.heavy_vehicle_relevance
-            row.electric_charging_relevance = facility.electric_charging_relevance
-            row.confidence_score = facility.confidence_score
-            row.freshness_ts = facility.freshness_ts
-            row.normalized_hash = facility.normalized_hash
-            row.verified_status = facility.verified_status
-            row.notes = facility.notes
+                session.flush()
+            except IntegrityError:
+                session.rollback()
+                row = (
+                    session.query(NormalizedFacilityRow)
+                    .filter(
+                        NormalizedFacilityRow.provider_name == facility.provider_name,
+                        NormalizedFacilityRow.provider_record_id == facility.provider_record_id,
+                    )
+                    .one()
+                )
+                for attr, val in _fields.items():
+                    setattr(row, attr, val)
             session.commit()
             session.refresh(row)
             return self._facility_to_dict(row)
@@ -764,6 +814,8 @@ class SQLRepository:
         provider: str | None = None,
         severity: str | None = None,
         run_id: int | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         with self._session() as session:
             query = session.query(NormalizationIssueRow)
@@ -773,7 +825,7 @@ class SQLRepository:
                 query = query.filter(NormalizationIssueRow.severity == severity)
             if run_id is not None:
                 query = query.filter(NormalizationIssueRow.run_id == run_id)
-            rows = query.order_by(NormalizationIssueRow.created_at.desc()).all()
+            rows = query.order_by(NormalizationIssueRow.created_at.desc()).limit(limit).offset(offset).all()
             return [self._issue_to_dict(row) for row in rows]
 
     def save_gap(self, finding: GapFinding) -> dict[str, Any]:
@@ -793,7 +845,7 @@ class SQLRepository:
             session.refresh(row)
             return self._gap_to_dict(row)
 
-    def list_gaps(self, region: str | None = None, category: str | None = None, stale_only: bool = False) -> list[dict[str, Any]]:
+    def list_gaps(self, region: str | None = None, category: str | None = None, stale_only: bool = False, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
         with self._session() as session:
             query = session.query(GapFindingRow)
             if region:
@@ -802,16 +854,19 @@ class SQLRepository:
                 query = query.filter(GapFindingRow.category == category)
             if stale_only:
                 query = query.filter(GapFindingRow.finding_type == "stale_record")
-            rows = query.order_by(GapFindingRow.created_at.desc()).all()
+            rows = query.order_by(GapFindingRow.created_at.desc()).limit(limit).offset(offset).all()
             return [self._gap_to_dict(row) for row in rows]
 
     def save_checkpoint(self, provider_name: str, checkpoint: str) -> None:
         with self._session() as session:
-            row = session.query(ProviderCheckpoint).filter(ProviderCheckpoint.provider_name == provider_name).one_or_none()
-            if row is None:
-                row = ProviderCheckpoint(provider_name=provider_name, checkpoint=checkpoint, updated_at=utc_now())
+            now = utc_now()
+            row = ProviderCheckpoint(provider_name=provider_name, checkpoint=checkpoint, updated_at=now)
+            try:
                 session.add(row)
-            else:
+                session.flush()
+            except IntegrityError:
+                session.rollback()
+                row = session.query(ProviderCheckpoint).filter(ProviderCheckpoint.provider_name == provider_name).one()
                 row.checkpoint = checkpoint
                 row.updated_at = utc_now()
             session.commit()
@@ -891,6 +946,33 @@ class SQLRepository:
             session.commit()
             return candidates
 
+    def list_facilities_with_curations(
+        self,
+        provider: str | None = None,
+        category: str | None = None,
+        city: str | None = None,
+        verified: bool | None = None,
+    ) -> list[tuple[dict[str, Any], dict[str, Any] | None]]:
+        with self._session() as session:
+            query = (
+                session.query(NormalizedFacilityRow, FacilityCurationRow)
+                .outerjoin(FacilityCurationRow, NormalizedFacilityRow.id == FacilityCurationRow.facility_id)
+            )
+            if provider:
+                query = query.filter(NormalizedFacilityRow.provider_name == provider)
+            if category:
+                query = query.filter(NormalizedFacilityRow.category == category)
+            if city:
+                query = query.filter(NormalizedFacilityRow.city == city)
+            if verified is not None:
+                target = "verified" if verified else "unverified"
+                query = query.filter(NormalizedFacilityRow.verified_status == target)
+            rows = query.order_by(NormalizedFacilityRow.id.asc()).all()
+            return [
+                (self._facility_to_dict(facility), self._curation_to_dict(curation) if curation else None)
+                for facility, curation in rows
+            ]
+
     def list_facility_curations(self) -> list[dict[str, Any]]:
         with self._session() as session:
             rows = session.query(FacilityCurationRow).order_by(FacilityCurationRow.facility_id.asc()).all()
@@ -902,47 +984,89 @@ class SQLRepository:
             return self._curation_to_dict(row) if row is not None else None
 
     def upsert_facility_curation(self, facility_id: int, values: dict[str, Any]) -> dict[str, Any]:
+        now = utc_now()
         with self._session() as session:
-            row = session.query(FacilityCurationRow).filter(FacilityCurationRow.facility_id == facility_id).one_or_none()
-            if row is None:
-                row = FacilityCurationRow(facility_id=facility_id, created_at=utc_now(), updated_at=utc_now())
-                session.add(row)
+            row = FacilityCurationRow(facility_id=facility_id, created_at=now, updated_at=now)
             for field in self.CURATION_FIELDS:
                 if field in values:
                     setattr(row, field, values[field])
-            row.updated_at = utc_now()
+            try:
+                session.add(row)
+                session.flush()
+            except IntegrityError:
+                session.rollback()
+                row = session.query(FacilityCurationRow).filter(FacilityCurationRow.facility_id == facility_id).one()
+                for field in self.CURATION_FIELDS:
+                    if field in values:
+                        setattr(row, field, values[field])
+                row.updated_at = now
             session.commit()
             session.refresh(row)
             return self._curation_to_dict(row)
 
-    def list_manual_facilities(self) -> list[dict[str, Any]]:
+    def list_manual_facilities(
+        self,
+        category: str | None = None,
+        city: str | None = None,
+        verified: bool | None = None,
+    ) -> list[dict[str, Any]]:
         with self._session() as session:
-            rows = session.query(ManualFacilityRow).order_by(ManualFacilityRow.id.asc()).all()
+            query = session.query(ManualFacilityRow).order_by(ManualFacilityRow.id.asc())
+            if category:
+                query = query.filter(ManualFacilityRow.category == category)
+            if city:
+                query = query.filter(ManualFacilityRow.city == city)
+            if verified is not None:
+                target = "verified" if verified else "unverified"
+                query = query.filter(ManualFacilityRow.verified_status == target)
+            rows = query.all()
             return [self._manual_facility_to_dict(row) for row in rows]
 
     def upsert_manual_facility(self, values: dict[str, Any]) -> dict[str, Any]:
+        now = utc_now()
+        baserow_row_id = values.get("baserow_row_id")
         with self._session() as session:
-            row = None
-            baserow_row_id = values.get("baserow_row_id")
             if baserow_row_id is not None:
-                row = session.query(ManualFacilityRow).filter(ManualFacilityRow.baserow_row_id == baserow_row_id).one_or_none()
-            if row is None and values.get("id") is not None:
-                row = session.get(ManualFacilityRow, values["id"])
-            if row is None:
                 row = ManualFacilityRow(
+                    baserow_row_id=baserow_row_id,
                     facility_name=str(values.get("facility_name") or ""),
                     category=str(values.get("category") or "manual"),
                     country_code=str(values.get("country_code") or "se"),
                     services=list(values.get("services") or []),
                     verified_status=str(values.get("verified_status") or "unverified"),
-                    created_at=utc_now(),
-                    updated_at=utc_now(),
+                    created_at=now,
+                    updated_at=now,
                 )
-                session.add(row)
-            for field in self.MANUAL_FIELDS:
-                if field in values:
-                    setattr(row, field, values[field])
-            row.updated_at = utc_now()
+                for field in self.MANUAL_FIELDS:
+                    if field in values:
+                        setattr(row, field, values[field])
+                try:
+                    session.add(row)
+                    session.flush()
+                except IntegrityError:
+                    session.rollback()
+                    row = session.query(ManualFacilityRow).filter(ManualFacilityRow.baserow_row_id == baserow_row_id).one()
+                    for field in self.MANUAL_FIELDS:
+                        if field in values:
+                            setattr(row, field, values[field])
+                    row.updated_at = now
+            else:
+                row = session.get(ManualFacilityRow, values["id"]) if values.get("id") is not None else None
+                if row is None:
+                    row = ManualFacilityRow(
+                        facility_name=str(values.get("facility_name") or ""),
+                        category=str(values.get("category") or "manual"),
+                        country_code=str(values.get("country_code") or "se"),
+                        services=list(values.get("services") or []),
+                        verified_status=str(values.get("verified_status") or "unverified"),
+                        created_at=now,
+                        updated_at=now,
+                    )
+                    session.add(row)
+                for field in self.MANUAL_FIELDS:
+                    if field in values:
+                        setattr(row, field, values[field])
+                row.updated_at = now
             session.commit()
             session.refresh(row)
             return self._manual_facility_to_dict(row)

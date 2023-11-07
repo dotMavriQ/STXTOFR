@@ -25,13 +25,19 @@ class FacilityViewService:
         city: str | None = None,
         need: str | None = None,
         verified: bool | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         if view == "source":
             rows = self.repository.list_facilities(provider=provider)
             rows = [self._decorate_row(row) for row in rows]
-            return self._filter_rows(rows, category=category, city=city, need=need, verified=verified)
-        rows = self._build_effective_rows(provider=provider)
-        return self._filter_rows(rows, category=category, city=city, need=need, verified=verified)
+            filtered = self._filter_rows(rows, category=category, city=city, need=need, verified=verified)
+        else:
+            rows = self._build_effective_rows(
+                provider=provider, category=category, city=city, verified=verified
+            )
+            filtered = self._filter_rows(rows, need=need)
+        return filtered[offset:offset + limit]
 
     def build_map_snapshot(
         self,
@@ -59,17 +65,25 @@ class FacilityViewService:
             },
         }
 
-    def _build_effective_rows(self, *, provider: str | None = None) -> list[dict[str, Any]]:
-        source_rows = self.repository.list_facilities(provider=provider)
-        curations = {row["facility_id"]: row for row in self.repository.list_facility_curations()}
-        rows: list[dict[str, Any]] = []
-        for source in source_rows:
-            curation = curations.get(source["id"])
-            rows.append(self._merge_source_with_curation(source, curation))
-        for manual in self.repository.list_manual_facilities():
-            if provider and provider != "manual":
-                continue
-            rows.append(self._manual_to_effective(manual))
+    def _build_effective_rows(
+        self,
+        *,
+        provider: str | None = None,
+        category: str | None = None,
+        city: str | None = None,
+        verified: bool | None = None,
+    ) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = [
+            self._merge_source_with_curation(source, curation)
+            for source, curation in self.repository.list_facilities_with_curations(
+                provider=provider, category=category, city=city, verified=verified
+            )
+        ]
+        if not provider or provider == "manual":
+            for manual in self.repository.list_manual_facilities(
+                category=category, city=city, verified=verified
+            ):
+                rows.append(self._manual_to_effective(manual))
         return rows
 
     @staticmethod
