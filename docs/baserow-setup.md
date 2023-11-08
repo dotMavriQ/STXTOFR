@@ -1,4 +1,4 @@
-m# Baserow Setup
+# Baserow Setup
 
 This is the exact review table shape STXTOFR expects for the first live Baserow round-trip.
 

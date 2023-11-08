@@ -5,7 +5,7 @@ STXTOFR treats Baserow as the editing surface, not the long-term source of truth
 ## Review Flow
 
 1. Import providers into the source layer with `POST /runs` or `POST /runs/{provider}`.
-2. Create the Baserow review table described in [docs/baserow-setup.md](/home/dotmavriq/Code/STXTOFR/docs/baserow-setup.md).
+2. Create the Baserow review table described in [docs/baserow-setup.md](baserow-setup.md).
 3. Push review rows to Baserow with `POST /curation/push`.
 4. Let a human update core business fields or add missing facilities in Baserow.
 5. Pull the reviewed data back with `POST /curation/pull`.
