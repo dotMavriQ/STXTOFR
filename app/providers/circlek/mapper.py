@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from app.normalization.models import NormalizedFacility, RawPayloadRef
 from app.normalization.geo import CoordinateNormalizationResult
+from app.normalization.models import NormalizedFacility, RawPayloadRef
 from app.providers.common import stable_hash
 
 

@@ -3,9 +3,8 @@ from datetime import datetime
 from pathlib import Path
 
 from app.core.exceptions import ProviderFetchError
-from app.providers.trb.adapter import TRBAdapter
 from app.providers.base import RunContext
-
+from app.providers.trb.adapter import TRBAdapter
 
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import replace
 
-from app.core.exceptions import ActiveRunError, RecordNotFound
+from app.core.exceptions import ActiveRunError
 from app.core.time import parse_utc_datetime
 from app.normalization.models import FacilitySourceLink
 from app.providers.base import RunContext

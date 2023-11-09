@@ -4,7 +4,6 @@ from app.providers.base import RunContext
 from app.providers.rasta.adapter import RastaAdapter
 from app.providers.rasta.parser import clean_hours, extract_services, parse_opening_hours_tables, split_swedish_address
 
-
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 
 

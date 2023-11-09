@@ -2,10 +2,9 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import api_router, public_router
-from app.core.logging import configure_logging
 from app.core.config import get_settings
+from app.core.logging import configure_logging
 from app.storage.db import init_db
-
 
 configure_logging()
 

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+import itertools
 import os
 import sys
-import itertools
 from pathlib import Path
 
 import pytest
-
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:

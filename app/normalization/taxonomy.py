@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import Any
 
-
 SERVICE_FACETS: tuple[dict[str, str], ...] = (
     {"id": "food", "label": "Food & drinks"},
     {"id": "fuel", "label": "Fuel"},

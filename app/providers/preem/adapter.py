@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from typing import Any
 
 from app.core.exceptions import ProviderFetchError

@@ -7,7 +7,6 @@ import requests
 
 from app.core.config import get_settings
 
-
 BASEROW_REVIEW_FIELDS: tuple[dict[str, Any], ...] = (
     {"name": "stxtofr_key", "type": "text"},
     {"name": "row_origin", "type": "text"},

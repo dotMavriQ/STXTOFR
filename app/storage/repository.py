@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import asdict
-from datetime import datetime, timedelta
 import hashlib
 import itertools
 import json
+from dataclasses import asdict
+from datetime import datetime, timedelta
 from typing import Any, Protocol
 
 from sqlalchemy.exc import IntegrityError
@@ -26,7 +26,6 @@ from app.storage.schema import (
     IngestionRun,
     ManualFacilityRow,
     MergeCandidateRow,
-    MergedFacilityRow,
     NormalizationIssueRow,
     NormalizedFacilityRow,
     ProviderCheckpoint,

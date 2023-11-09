@@ -10,8 +10,8 @@ from app.services.baserow import build_baserow_client
 from app.services.curation import CurationService
 from app.services.export_service import ExportService
 from app.services.facility_view import FacilityViewService
-from app.services.provider_status import ProviderStatusService
 from app.services.provider_registry import ProviderRegistry, build_provider_registry
+from app.services.provider_status import ProviderStatusService
 from app.storage.db import init_db
 from app.storage.raw_archive import build_archive_backend
 from app.storage.repository import InMemoryRepository, Repository, SQLRepository

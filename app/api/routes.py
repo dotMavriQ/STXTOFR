@@ -24,11 +24,10 @@ from app.ingestion.service import IngestionService
 from app.services.curation import CurationService
 from app.services.export_service import ExportService
 from app.services.facility_view import FacilityViewService
-from app.services.provider_status import ProviderStatusService
 from app.services.provider_registry import ProviderRegistry
+from app.services.provider_status import ProviderStatusService
 from app.storage.db import check_db_connection
 from app.storage.repository import Repository
-
 
 public_router = APIRouter()
 api_router = APIRouter(dependencies=[Depends(require_api_key)])

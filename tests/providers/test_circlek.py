@@ -5,7 +5,6 @@ from app.core.time import utc_now
 from app.providers.base import RunContext
 from app.providers.circlek.adapter import CircleKAdapter
 
-
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 
 

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import re
-from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+
+from bs4 import BeautifulSoup
 
 
 def extract_services(html: str) -> list[str]:

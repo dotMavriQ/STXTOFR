@@ -5,7 +5,6 @@ from pathlib import Path
 from app.providers.base import RunContext
 from app.providers.trafikverket.adapter import TrafikverketParkingAdapter
 
-
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 
 

@@ -5,10 +5,10 @@ from typing import Any
 
 from app.core.time import utc_now
 from app.services.baserow import BaserowClient
-
-logger = logging.getLogger(__name__)
 from app.services.facility_view import FacilityViewService
 from app.storage.repository import Repository
+
+logger = logging.getLogger(__name__)
 
 
 EDITABLE_FIELDS = (

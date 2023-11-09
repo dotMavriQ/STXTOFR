@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from app.api import routes
-from app.api.dependencies import get_facility_view_service, get_registry, get_repository, get_export_service
+from app.api.dependencies import get_export_service, get_facility_view_service, get_registry, get_repository
 from app.core.time import utc_now
 from app.normalization.models import NormalizedFacility, RawPayloadRef
 

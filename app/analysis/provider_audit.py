@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import asdict, fields
 import json
+from dataclasses import asdict, fields
 from pathlib import Path
 from typing import Any, Callable
 
@@ -15,7 +15,6 @@ from app.providers.preem.adapter import PreemAdapter
 from app.providers.rasta.adapter import RastaAdapter
 from app.providers.trafikverket.adapter import TrafikverketParkingAdapter
 from app.providers.trb.adapter import TRBAdapter
-
 
 FIXTURES_DIR = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 NORMALIZED_FIELD_NAMES = [

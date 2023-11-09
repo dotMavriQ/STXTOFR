@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 
 from app.normalization.models import NormalizationIssue
 
-
 SWEDEN_LATITUDE_RANGE = (55.0, 69.5)
 SWEDEN_LONGITUDE_RANGE = (10.5, 24.5)
 
